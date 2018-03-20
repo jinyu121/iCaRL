@@ -6,7 +6,11 @@ except:
     import pickle as cPickle
 
 
-def prepare_files_fake(universal_data):
+def top_k_accuracy(label, arr, k):
+    return np.average([ll in best for ll, best in zip(label, np.argsort(arr, axis=1)[:, -k:])])
+
+
+def prepare_files(universal_data):
     train_index, train_feature, train_label, valid_index, valid_feature, valid_label = [], [], [], [], [], []
     sta_train, fin_train, sta_valid, fin_valid = 0, 0, 0, 0
     for i, data in enumerate(universal_data):

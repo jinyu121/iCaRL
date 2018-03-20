@@ -8,5 +8,5 @@ nb_proto : 5  # Number of prototypes per class: total protoset memory/ total num
 raw_data_path : '/home/shaoyihao/haoyu/Data'
 datapath : 'data'
 save_path : 'output'
-top : 1 # Choose to evaluate the top X accuracy
+top : 5 # Choose to evaluate the top X accuracy
 is_cumul : True  # Evaluate on the cumul of classes if 'cumul', otherwise on the first classes

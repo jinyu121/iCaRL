@@ -17,7 +17,7 @@ try:
 except:
     import pickle as cPickle
 
-import utils_data
+from utils import prepare_files, top_k_accuracy
 from config import load_global_conf, get_global_conf
 
 parser = ArgumentParser()
@@ -56,18 +56,16 @@ for _ in range(nb_groups * nb_cl):
 np.random.seed(1993)
 
 # Preparing the files per group of classes
-print("Loading dataset ...")
+print("Loading dataset ...\n")
 fnm = 'data_{}_{}_{}_{}_{}.pkl'.format(conf.name, conf.nb_groups, conf.nb_cl, conf.nb_train, conf.nb_val)
 universal_data = cPickle.load(open(os.path.join(conf.datapath, fnm), 'rb'))
 index_train, features_train, labels_train, \
-index_valid, features_valid, labels_valid = utils_data.prepare_files_fake(universal_data)
+index_valid, features_valid, labels_valid = prepare_files(universal_data)
 
 ### Start of the main algorithm ###
 for itera in trange(nb_groups, desc="Group"):
 
     # Train
-
-    # Files to load : training samples + protoset
     tqdm.write('Group #{}, total classes {}'.format(itera + 1, (itera + 1) * nb_cl))
 
     # Reducing number of exemplars for the previous classes
@@ -82,7 +80,7 @@ for itera in trange(nb_groups, desc="Group"):
     # Herding procedure : ranking of the potential exemplars
     # Exemplars selection
     for iter_dico in range(nb_cl):
-        now_cls = iter_dico + itera * nb_cl
+        now_cls = itera * nb_cl + iter_dico
         ind_cl = np.where(label_dico == now_cls)[0]
         D = Dtot[:, ind_cl]
         files_iter = processed_files[ind_cl]
@@ -106,15 +104,14 @@ for itera in trange(nb_groups, desc="Group"):
         Dtot = Dtot.T / np.linalg.norm(Dtot.T, axis=0)
 
         for iter_dico in range(nb_cl):
-            now_cls = iter_dico + iteration2 * nb_cl
-            ind_cl = np.where(label_dico == (now_cls))[0]
+            now_cls = iteration2 * nb_cl + iter_dico
+            ind_cl = np.where(label_dico == now_cls)[0]
             D = Dtot[:, ind_cl]
             files_iter = processed_files[ind_cl]
-            current_cl = np.arange(iteration2 * nb_cl, (iteration2 + 1) * nb_cl)
 
             # Normal NCM mean
-            class_means[:, now_cls, 1, itera] = np.mean(D, axis=1)
-            class_means[:, now_cls, 1, itera] /= np.linalg.norm(class_means[:, now_cls, 1, itera])
+            tmp_mean = np.mean(D, axis=1)
+            class_means[:, now_cls, 1, itera] = tmp_mean / np.linalg.norm(tmp_mean)
 
             # iCaRL approximated mean (mean-of-exemplars)
             # use only the first exemplars of the old classes: nb_protos_cl controls the number of exemplars per class
@@ -135,11 +132,8 @@ for itera in trange(nb_groups, desc="Group"):
     # Test
 
     ## Get test data group
-    if is_cumul:
-        eval_groups = [x for x in range(itera + 1)]
-    else:
-        eval_groups = [0]
-    files_from_cl = np.array([index_valid[i] for i in eval_groups]).ravel()
+    eval_groups = [x for x in range(itera + 1)] if is_cumul else [0]
+    files_from_cl = np.concatenate([index_valid[i] for i in eval_groups])
 
     tqdm.write("Evaluation on groups {} ".format(eval_groups))
     mapped_prototypes, l = features_valid[files_from_cl, :], labels_valid[files_from_cl]
@@ -147,10 +141,13 @@ for itera in trange(nb_groups, desc="Group"):
     pred_inter = mapped_prototypes.T / np.linalg.norm(mapped_prototypes.T, axis=0)
 
     sqd_icarl = -cdist(class_means[:, :, 0, itera].T, pred_inter.T, 'sqeuclidean').T
-    sqd_ncm = -cdist(class_means[:, :, 1, itera].T, pred_inter.T, 'sqeuclidean').T
-    stat_icarl = [ll in best for ll, best in zip(l, np.argsort(sqd_icarl, axis=1)[:, -top:])]
-    stat_ncm = [ll in best for ll, best in zip(l, np.argsort(sqd_ncm, axis=1)[:, -top:])]
+    tqdm.write('iCaRL accuracy:\t Top 1: {} / Top {}: {}'.format(top_k_accuracy(l, sqd_icarl, 1),
+                                                                 top,
+                                                                 top_k_accuracy(l, sqd_icarl, top)))
 
-    tqdm.write('iCaRL top {} accuracy: {}'.format(top, np.average(stat_icarl)))
-    tqdm.write('NCM top {} accuracy: {}'.format(top, np.average(stat_ncm)))
+    sqd_ncm = -cdist(class_means[:, :, 1, itera].T, pred_inter.T, 'sqeuclidean').T
+    tqdm.write('NCM accuracy:\t Top 1: {} / Top {}: {}'.format(top_k_accuracy(l, sqd_ncm, 1),
+                                                               top,
+                                                               top_k_accuracy(l, sqd_ncm, top)))
+
     tqdm.write("")
