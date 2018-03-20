@@ -110,7 +110,7 @@ def main():
 
     # Save
     os.makedirs(conf.datapath, exist_ok=True)
-    fnm = 'data_{}_{}_{}_{}.pkl'.format(conf.nb_groups, conf.nb_cl, conf.nb_train, conf.nb_val)
+    fnm = 'data_{}_{}_{}_{}_{}.pkl'.format(conf.name, conf.nb_groups, conf.nb_cl, conf.nb_train, conf.nb_val)
     cPickle.dump(data, open(os.path.join(conf.datapath, fnm), 'wb'))
 
 

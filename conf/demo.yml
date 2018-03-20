@@ -1,3 +1,4 @@
+name : 'imagenet'
 feature_dim : 4096
 nb_groups : 7  # Number of groups
 nb_cl : 60  # Classes per group

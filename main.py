@@ -57,7 +57,7 @@ np.random.seed(1993)
 
 # Preparing the files per group of classes
 print("Loading dataset ...")
-fnm = 'data_{}_{}_{}_{}.pkl'.format(conf.nb_groups, conf.nb_cl, conf.nb_train, conf.nb_val)
+fnm = 'data_{}_{}_{}_{}_{}.pkl'.format(conf.name, conf.nb_groups, conf.nb_cl, conf.nb_train, conf.nb_val)
 universal_data = cPickle.load(open(os.path.join(conf.datapath, fnm), 'rb'))
 index_train, features_train, labels_train, \
 index_valid, features_valid, labels_valid = utils_data.prepare_files_fake(universal_data)
@@ -126,7 +126,7 @@ for itera in trange(nb_groups, desc="Group"):
             class_means[:, now_cls, 0, itera] = tmp_mean / np.linalg.norm(tmp_mean)
 
     # Pickle class means and protoset
-    info = "cls_{}_proto_{}_group_{}_tot_{}".format(nb_cl, nb_proto, itera, nb_cl * (itera + 1))
+    info = "{}_cls_{}_proto_{}_group_{}_tot_{}".format(conf.name, nb_cl, nb_proto, itera, nb_cl * (itera + 1))
     with open(os.path.join(save_path, 'class_means_{}.pickle'.format(info)), 'wb') as fp:
         cPickle.dump(class_means, fp)
     with open(os.path.join(save_path, 'files_protoset_{}.pickle'.format(info)), 'wb') as fp:
