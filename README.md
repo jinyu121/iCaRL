@@ -1,16 +1,51 @@
-# iCaRL: Incremental Classifier and Representation Learning
+# iCaRL: incremental Class and Representation Learning
+-- a modified version
 
-Tensorflow and Theano + Lasagne codes for the paper https://arxiv.org/abs/1611.07725
+For pure features, we cut off the ResNet and the net-training process.
 
-## Abstract 
+## Requirements
 
-A major open problem on the road to artificial intelligence is the development of incrementally learning systems that learn about more and more concepts over time from a stream of data. In this work, we introduce a new training strategy, iCaRL, that allows learning in such a class-incremental way: only the training data for a small number of classes has to be present at the same time and new classes can be added progressively. iCaRL learns strong classifiers and a data representation simultaneously. This distinguishes it from earlier works that were fundamentally limited to fixed data representations and therefore incompatible with deep learning architectures. We show by experiments on CIFAR-100 and ImageNet ILSVRC 2012 data that iCaRL can learn many classes incrementally over a long period of time where other strategies quickly fail.
+- Numpy
+- Scipy
+- pyyaml
+- easydict
+- h5py (read `.mat` file with new format)
+- sklearn (shuffle data)
+- tqdm (show a process bar)
 
-## If you consider citing us
+## How to use
 
-    @inproceedings{ rebuffi-cvpr2017,
-       author = { Sylvestre-Alvise Rebuffi and Alexander Kolesnikov and Georg Sperl and Christoph H. Lampert },
-       title = {{iCaRL:} Incremental Classifier and Representation Learning},
-       booktitle = CVPR,
-       year = 2017,
+### Extract features from your dataset
+
+### Generate data file
+
+1. Modify `conf/demo.yml`
+1. And perhaps you have to modify `data_gen.py` to adjust to the data structure in your `.mat` file 
+1. Run `python3 data_gen.py`
+
+It will generate a data file in `data` folder with the format of 
+
+```
+[
+    {   // Group #1
+        "train_feature": train_feature, 
+        "train_label": train_label,
+        "eval_feature": eval_feature, 
+        "eval_label": eval_label
+    },
+    {   // Group #2
+        "train_feature": train_feature, 
+        "train_label": train_label,
+        "eval_feature": eval_feature, 
+        "eval_label": eval_label
     }
+    ...And more groups...
+]
+``` 
+
+### Train and test
+
+1. Modify `conf/demo.yml`
+1. Run `python3 main.py`
+
+Because of the cutting off of network, we just show the accuracy of iCaRL and NCM.
