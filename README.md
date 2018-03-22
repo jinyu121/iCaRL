@@ -21,31 +21,31 @@ For pure features, we cut off the ResNet and the net-training process.
 
 1. Modify `conf/demo.yml`
 1. And perhaps you have to modify `data_gen.py` to adjust to the data structure in your `.mat` file 
-1. Run `python3 data_gen.py`
+1. Run `python3 data_gen.py --conf conf/demo.yml`
 
 It will generate a data file in `data` folder with the format of 
 
 ```
 [
     {   // Group #1
-        "train_feature": train_feature, 
-        "train_label": train_label,
-        "eval_feature": eval_feature, 
+        "train_feature": train_feature_matrix,  <= num_examples * dim_features
+        "train_label": train_label,             <= num_examples
+        "eval_feature": eval_feature_matrix, 
         "eval_label": eval_label
     },
     {   // Group #2
-        "train_feature": train_feature, 
+        "train_feature": train_feature_matrix, 
         "train_label": train_label,
-        "eval_feature": eval_feature, 
+        "eval_feature": eval_feature_matrix, 
         "eval_label": eval_label
     }
     ...And more groups...
 ]
-``` 
+```
 
 ### Train and test
 
 1. Modify `conf/demo.yml`
-1. Run `python3 main.py`
+1. Run `python3 main.py --conf conf/demo.yml`
 
 Because of the cutting off of network, we just show the accuracy of iCaRL and NCM.

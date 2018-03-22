@@ -94,8 +94,8 @@ def process_2010(data, ith, offset, num_classes, num_per_classes_train, num_per_
 
 
 def main():
-    content_2012 = h5py.File(os.path.join(conf.raw_data_path, 'ImageNet2012_VGG_all.mat'))
-    content_2010 = h5py.File(os.path.join(conf.raw_data_path, 'Image_NN3.mat'))['imgtag']['te']
+    content_2012 = h5py.File(os.path.join(conf.raw_data_path, 'ImageNet_2012_VGG.mat'))
+    content_2010 = h5py.File(os.path.join(conf.raw_data_path, 'ImageNet_2010_VGG.mat'))['imgtag']['te']
 
     data = []
 

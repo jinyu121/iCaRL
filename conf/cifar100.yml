@@ -1,11 +1,11 @@
-name : 'imagenet'
-feature_dim : 4096
-nb_groups : 7  # Number of groups
-nb_cl : 60  # Classes per group
+name : 'cifar100'
+feature_dim : 1024
+nb_groups : 10  # Number of groups
+nb_cl : 10  # Classes per group
 nb_train : 10  # Training samples per class
-nb_val : 90  # Validation samples per class
+nb_val : 100  # Validation samples per class
 nb_proto : 5  # Number of prototypes per class: total protoset memory/ total number of classes
-raw_data_path : '/home/shaoyihao/haoyu/Data/ImageNet'
+raw_data_path : '/home/shaoyihao/haoyu/Data/CIFAR'
 datapath : 'data'
 save_path : 'output'
 top : 5 # Choose to evaluate the top X accuracy
