@@ -27,18 +27,25 @@ pprint(conf)
 
 
 def process(ith, feature_train, label_train, feature_test, label_test,
-            num_classes, num_per_classes_train, num_per_classes_val):
+            num_classes, num_per_classes_train, num_per_classes_val, is_shuffle=True):
     cls_num_begin = ith * num_classes
     cls_num_end = cls_num_begin + num_classes
 
     train_feature, train_label, eval_feature, eval_label = [], [], [], []
 
     for clazz in trange(cls_num_begin, cls_num_end, desc="Class"):
-        index_train = shuffle(np.where(label_train == clazz)[0])[:num_per_classes_train]
+        index_train = np.where(label_train == clazz)[0]
+        if is_shuffle:
+            index_train = shuffle(index_train)
+        index_train = index_train[:num_per_classes_train]
         train_feature.append(feature_train[index_train, :])
         train_label.extend([clazz] * num_per_classes_train)
 
-        index_val = shuffle(np.where(label_test == clazz)[0])[:num_per_classes_val]
+        index_val = np.where(label_test == clazz)[0]
+        if is_shuffle:
+            index_val = shuffle(index_val)
+        index_val = index_val[:num_per_classes_val]
+
         eval_feature.append(feature_test[index_val, :])
         eval_label.extend([clazz] * num_per_classes_val)
 
@@ -48,9 +55,9 @@ def process(ith, feature_train, label_train, feature_test, label_test,
     eval_feature = np.concatenate(eval_feature)
     eval_label = np.array(eval_label)
 
-    # Shuffle
-    train_feature, train_label = shuffle(train_feature, train_label)
-    eval_feature, eval_label = shuffle(eval_feature, eval_label)
+    if is_shuffle:
+        train_feature, train_label = shuffle(train_feature, train_label)
+        eval_feature, eval_label = shuffle(eval_feature, eval_label)
 
     return {"train_feature": train_feature, "train_label": train_label,
             "eval_feature": eval_feature, "eval_label": eval_label}
@@ -65,7 +72,8 @@ def main():
     data = []
 
     for ith in trange(conf.nb_groups, desc="group"):
-        tmp = process(ith, train_feature, train_label, eval_feature, eval_label, conf.nb_cl, conf.nb_train, conf.nb_val)
+        tmp = process(ith, train_feature, train_label, eval_feature, eval_label,
+                      conf.nb_cl, conf.nb_train, conf.nb_val, conf.data_shuffle)
         data.append(tmp)
 
     # Save

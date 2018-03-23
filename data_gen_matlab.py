@@ -27,7 +27,7 @@ print("Experiment parameters:")
 pprint(conf)
 
 
-def process_2012(data, ith, offset, num_classes, num_per_classes_train, num_per_classes_val):
+def process_2012(data, ith, offset, num_classes, num_per_classes_train, num_per_classes_val, is_shuffle=True):
     cls_num_begin = ith * num_classes
     cls_num_end = cls_num_begin + num_classes
 
@@ -40,7 +40,10 @@ def process_2012(data, ith, offset, num_classes, num_per_classes_train, num_per_
         fd = data[f[clazz][0]][()].T
 
         # random select
-        index = np.random.permutation(fd.shape[0])
+        if is_shuffle:
+            index = np.random.permutation(fd.shape[0])
+        else:
+            index = np.arange(fd.shape[0])
 
         train_feature.extend(fd[index[:num_per_classes_train]])
         eval_feature.extend(fd[index[num_per_classes_train:num_per_classes_train + num_per_classes_val]])
@@ -53,15 +56,15 @@ def process_2012(data, ith, offset, num_classes, num_per_classes_train, num_per_
     eval_feature = np.array(eval_feature)
     eval_label = np.array(eval_label)
 
-    # Shuffle
-    train_feature, train_label = shuffle(train_feature, train_label)
-    eval_feature, eval_label = shuffle(eval_feature, eval_label)
+    if is_shuffle:
+        train_feature, train_label = shuffle(train_feature, train_label)
+        eval_feature, eval_label = shuffle(eval_feature, eval_label)
 
     return {"train_feature": train_feature, "train_label": train_label,
             "eval_feature": eval_feature, "eval_label": eval_label}
 
 
-def process_2010(data, ith, offset, num_classes, num_per_classes_train, num_per_classes_val):
+def process_2010(data, ith, offset, num_classes, num_per_classes_train, num_per_classes_val, is_shuffle=True):
     cls_num_begin = ith * num_classes
     cls_num_end = cls_num_begin + num_classes
 
@@ -72,7 +75,9 @@ def process_2010(data, ith, offset, num_classes, num_per_classes_train, num_per_
 
     for clazz in trange(cls_num_begin, cls_num_end, desc="inner"):
         # get from raw data
-        index = shuffle(np.where(l == clazz + 1)[0])
+        index = np.where(l == clazz + 1)[0]
+        if is_shuffle:
+            index = shuffle(index)
 
         train_feature.extend(f[index[:num_per_classes_train]])
         eval_feature.extend(f[index[num_per_classes_train:num_per_classes_train + num_per_classes_val]])
@@ -85,9 +90,9 @@ def process_2010(data, ith, offset, num_classes, num_per_classes_train, num_per_
     eval_feature = np.array(eval_feature)
     eval_label = np.array(eval_label)
 
-    # Shuffle
-    train_feature, train_label = shuffle(train_feature, train_label)
-    eval_feature, eval_label = shuffle(eval_feature, eval_label)
+    if is_shuffle:
+        train_feature, train_label = shuffle(train_feature, train_label)
+        eval_feature, eval_label = shuffle(eval_feature, eval_label)
 
     return {"train_feature": train_feature, "train_label": train_label,
             "eval_feature": eval_feature, "eval_label": eval_label}
@@ -100,12 +105,12 @@ def main():
     data = []
 
     # Generate first group from 2012
-    tmp = process_2012(content_2012, 0, 0, conf.nb_cl, conf.nb_train, conf.nb_val)
+    tmp = process_2012(content_2012, 0, 0, conf.nb_cl, conf.nb_train, conf.nb_val, conf.data_shuffle)
     data.append(tmp)
 
     # Generate next groups from 2010
     for ith in trange(conf.nb_groups - 1, desc="outer"):
-        tmp = process_2010(content_2010, ith, 1, conf.nb_cl, conf.nb_train, conf.nb_val)
+        tmp = process_2010(content_2010, ith, 1, conf.nb_cl, conf.nb_train, conf.nb_val, conf.data_shuffle)
         data.append(tmp)
 
     # Save

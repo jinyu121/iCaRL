@@ -10,3 +10,5 @@ datapath : 'data'
 save_path : 'output'
 top : 5 # Choose to evaluate the top X accuracy
 test_group : 'all'  # 'all' / 'this' / '0'
+
+data_shuffle : False
