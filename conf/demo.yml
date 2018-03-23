@@ -9,4 +9,4 @@ raw_data_path : '/home/shaoyihao/haoyu/Data/ImageNet'
 datapath : 'data'
 save_path : 'output'
 top : 5 # Choose to evaluate the top X accuracy
-is_cumul : True  # Evaluate on the cumul of classes if 'cumul', otherwise on the first classes
+test_group : 'all'  # 'all' / 'this' / '0'

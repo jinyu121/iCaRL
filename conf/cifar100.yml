@@ -4,9 +4,9 @@ nb_groups : 10  # Number of groups
 nb_cl : 10  # Classes per group
 nb_train : 10  # Training samples per class
 nb_val : 100  # Validation samples per class
-nb_proto : 5  # Number of prototypes per class: total protoset memory/ total number of classes
+nb_proto : 10  # Number of prototypes per class: total protoset memory/ total number of classes
 raw_data_path : '/home/shaoyihao/haoyu/Data/CIFAR'
 datapath : 'data'
 save_path : 'output'
 top : 5 # Choose to evaluate the top X accuracy
-is_cumul : True  # Evaluate on the cumul of classes if 'cumul', otherwise on the first classes
+test_group : 'all'  # 'all' / 'this' / '0'

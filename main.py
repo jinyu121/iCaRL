@@ -36,7 +36,7 @@ nb_cl = conf.nb_cl  # Classes per group
 nb_groups = conf.nb_groups  # Number of groups
 nb_proto = conf.nb_proto  # Number of prototypes per class: total protoset memory/ total number of classes
 top = conf.top  # Choose to evaluate the top X accuracy
-is_cumul = conf.is_cumul  # Evaluate on the cumul of classes if 'cumul', otherwise on the first classes
+test_group = conf.test_group  # 'all' / 'this' / '0'
 feature_dim = conf.feature_dim
 save_path = conf.save_path
 ########################################
@@ -132,7 +132,13 @@ for itera in trange(nb_groups, desc="Group"):
     # Test
 
     ## Get test data group
-    eval_groups = [x for x in range(itera + 1)] if is_cumul else [0]
+    if 'all' == test_group:
+        eval_groups = [x for x in range(itera + 1)]
+    elif 'this' == test_group:
+        eval_groups = [itera]
+    else:
+        eval_groups = [int(test_group)]
+
     files_from_cl = np.concatenate([index_valid[i] for i in eval_groups])
 
     tqdm.write("Evaluation on groups {} ".format(eval_groups))
