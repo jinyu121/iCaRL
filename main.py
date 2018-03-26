@@ -46,9 +46,7 @@ os.makedirs(save_path, exist_ok=True)
 ### Initialization of some variables ###
 class_means = np.zeros((feature_dim, nb_groups * nb_cl, 2, nb_groups))
 loss_batch = []
-files_protoset = []
-for _ in range(nb_groups * nb_cl):
-    files_protoset.append([])
+files_protoset = [list() for _ in range(nb_groups * nb_cl)]
 
 ### Preparing the files for the training/validation ###
 
