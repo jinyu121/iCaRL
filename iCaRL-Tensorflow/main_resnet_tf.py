@@ -9,7 +9,7 @@ import sys
 try:
     import cPickle
 except:
-    import _pickle as cPickle
+    import pickle as cPickle
 # Syspath for the folder with the utils files
 #sys.path.insert(0, "/media/data/srebuffi")
 
@@ -44,19 +44,14 @@ save_path   = '/data/srebuffi/backup/'
 ### Initialization of some variables ###
 class_means    = np.zeros((512,nb_groups*nb_cl,2,nb_groups))
 loss_batch     = []
-files_protoset =[]
-for _ in range(nb_groups*nb_cl):
-    files_protoset.append([])
+files_protoset =[list() for _ in range(nb_groups*nb_cl)]
 
 
 ### Preparing the files for the training/validation ###
 
 # Random mixing
-print("Mixing the classes and putting them in batches of classes...")
+print("Putting classes in batches of classes...")
 np.random.seed(1993)
-order  = np.arange(nb_groups * nb_cl)
-mixing = np.arange(nb_groups * nb_cl)
-np.random.shuffle(mixing)
 
 # Loading the labels
 labels_dic, label_names, validation_ground_truth = utils_data.parse_devkit_meta(devkit_path)
@@ -66,14 +61,10 @@ labels_dic, label_names, validation_ground_truth = utils_data.parse_devkit_meta(
 
 # Preparing the files per group of classes
 print("Creating a validation set ...")
-files_train, files_valid = utils_data.prepare_files(train_path, mixing, order, labels_dic, nb_groups, nb_cl, nb_val)
+files_train, files_valid = utils_data.prepare_files(train_path, labels_dic, nb_groups, nb_cl, nb_val)
 
-# Pickle order and files lists and mixing
-with open(str(nb_cl)+'mixing.pickle','wb') as fp:
-    cPickle.dump(mixing,fp)
-
+# Pickle files lists
 with open(str(nb_cl)+'settings_resnet.pickle','wb') as fp:
-    cPickle.dump(order,fp)
     cPickle.dump(files_valid,fp)
     cPickle.dump(files_train,fp)
 
@@ -95,7 +86,7 @@ for itera in range(nb_groups):
       files_from_cl += tmp_var[0:min(len(tmp_var),nb_protos_cl)]
   
   ## Import the data reader ##
-  image_train, label_train   = utils_data.read_data(train_path, labels_dic, mixing, files_from_cl=files_from_cl)  
+  image_train, label_train   = utils_data.read_data(train_path, labels_dic, files_from_cl=files_from_cl)
   image_batch, label_batch_0 = tf.train.batch([image_train, label_train], batch_size=batch_size, num_threads=8)
   label_batch = tf.one_hot(label_batch_0,nb_groups*nb_cl)
   
@@ -125,8 +116,8 @@ for itera in range(nb_groups):
     with tf.device('/gpu:0'):
       scores            = tf.concat(scores,0)
       scores_stored     = tf.concat(scores_stored,0)
-      old_cl            = (order[range(itera*nb_cl)]).astype(np.int32)
-      new_cl            = (order[range(itera*nb_cl,nb_groups*nb_cl)]).astype(np.int32)
+      old_cl            = np.arange(itera*nb_cl)
+      new_cl            = np.arange(itera*nb_cl,nb_groups*nb_cl)
       label_old_classes = tf.sigmoid(tf.stack([scores_stored[:,i] for i in old_cl],axis=1))
       label_new_classes = tf.stack([label_batch[:,i] for i in new_cl],axis=1)
       pred_old_classes  = tf.stack([scores[:,i] for i in old_cl],axis=1)
@@ -188,7 +179,8 @@ for itera in range(nb_groups):
   ## Exemplars management part  ##
   nb_protos_cl  = int(np.ceil(nb_proto*nb_groups*1./(itera+1))) # Reducing number of exemplars for the previous classes
   files_from_cl = files_train[itera]
-  inits,scores,label_batch,loss_class,file_string_batch,op_feature_map = utils_icarl.reading_data_and_preparing_network(files_from_cl, gpu, itera, batch_size, train_path, labels_dic, mixing, nb_groups, nb_cl, save_path)
+  inits,scores,label_batch,loss_class,file_string_batch,op_feature_map = utils_icarl.reading_data_and_preparing_network(
+      files_from_cl, gpu, itera, batch_size, train_path, labels_dic, nb_groups, nb_cl, save_path)
   
   with tf.Session(config=config) as sess:
     coord   = tf.train.Coordinator()
@@ -202,7 +194,7 @@ for itera in range(nb_groups):
     # Herding procedure : ranking of the potential exemplars
     print('Exemplars selection starting ...')
     for iter_dico in range(nb_cl):
-        ind_cl     = np.where(label_dico == order[iter_dico+itera*nb_cl])[0]
+        ind_cl     = np.where(label_dico == iter_dico+itera*nb_cl)[0]
         D          = Dtot[:,ind_cl]
         files_iter = processed_files[ind_cl]
         mu         = np.mean(D,axis=1)
@@ -226,7 +218,8 @@ for itera in range(nb_groups):
   print('Computing theoretical class means for NCM and mean-of-exemplars for iCaRL ...')
   for iteration2 in range(itera+1):
       files_from_cl = files_train[iteration2]
-      inits,scores,label_batch,loss_class,file_string_batch,op_feature_map = utils_icarl.reading_data_and_preparing_network(files_from_cl, gpu, itera, batch_size, train_path, labels_dic, mixing, nb_groups, nb_cl, save_path)
+      inits,scores,label_batch,loss_class,file_string_batch,op_feature_map = utils_icarl.reading_data_and_preparing_network(
+          files_from_cl, gpu, itera, batch_size, train_path, labels_dic, nb_groups, nb_cl, save_path)
       
       with tf.Session(config=config) as sess:
           coord   = tf.train.Coordinator()
@@ -237,21 +230,21 @@ for itera in range(nb_groups):
           processed_files = np.array([x.decode() for x in processed_files])
           
           for iter_dico in range(nb_cl):
-              ind_cl     = np.where(label_dico == order[iter_dico+iteration2*nb_cl])[0]
+              ind_cl     = np.where(label_dico == iter_dico+iteration2*nb_cl)[0]
               D          = Dtot[:,ind_cl]
               files_iter = processed_files[ind_cl]
-              current_cl = order[range(iteration2*nb_cl,(iteration2+1)*nb_cl)]
+              current_cl = np.arange(iteration2*nb_cl,(iteration2+1)*nb_cl)
               
               # Normal NCM mean
-              class_means[:,order[iteration2*nb_cl+iter_dico],1,itera] = np.mean(D,axis=1)
-              class_means[:,order[iteration2*nb_cl+iter_dico],1,itera] /= np.linalg.norm(class_means[:,order[iteration2*nb_cl+iter_dico],1,itera])
+              class_means[:,iteration2*nb_cl+iter_dico,1,itera] = np.mean(D,axis=1)
+              class_means[:,iteration2*nb_cl+iter_dico,1,itera] /= np.linalg.norm(class_means[:,iteration2*nb_cl+iter_dico,1,itera])
               
               # iCaRL approximated mean (mean-of-exemplars)
               # use only the first exemplars of the old classes: nb_protos_cl controls the number of exemplars per class
               ind_herding = np.array([np.where(files_iter == files_protoset[iteration2*nb_cl+iter_dico][i])[0][0] for i in range(min(nb_protos_cl,len(files_protoset[iteration2*nb_cl+iter_dico])))])
               D_tmp       = D[:,ind_herding]
-              class_means[:,order[iteration2*nb_cl+iter_dico],0,itera] = np.mean(D_tmp,axis=1)
-              class_means[:,order[iteration2*nb_cl+iter_dico],0,itera] /= np.linalg.norm(class_means[:,order[iteration2*nb_cl+iter_dico],0,itera])
+              class_means[:,iteration2*nb_cl+iter_dico,0,itera] = np.mean(D_tmp,axis=1)
+              class_means[:,iteration2*nb_cl+iter_dico,0,itera] /= np.linalg.norm(class_means[:,iteration2*nb_cl+iter_dico,0,itera])
 
           coord.request_stop()
           coord.join(threads)

@@ -8,10 +8,12 @@ import utils_resnet
 try:
     import cPickle
 except:
-    import _pickle as cPickle
+    import pickle as cPickle
 
-def reading_data_and_preparing_network(files_from_cl, gpu, itera, batch_size, train_path, labels_dic, mixing, nb_groups, nb_cl, save_path):
-    image_train, label_train,file_string       = utils_data.read_data_test(train_path,labels_dic, mixing,files_from_cl=files_from_cl)
+def reading_data_and_preparing_network(files_from_cl, gpu, itera, batch_size, train_path, labels_dic, nb_groups, nb_cl,
+                                       save_path):
+    image_train, label_train,file_string       = utils_data.read_data_test(train_path, labels_dic,
+                                                                           files_from_cl=files_from_cl)
     image_batch, label_batch,file_string_batch = tf.train.batch([image_train, label_train,file_string], batch_size=batch_size, num_threads=8)
     label_batch_one_hot = tf.one_hot(label_batch,nb_groups*nb_cl)
     

@@ -10,7 +10,7 @@ import sys
 try:
     import cPickle
 except:
-    import _pickle as cPickle
+    import pickle as cPickle
 # Syspath for the folder with the utils files
 #sys.path.insert(0, "/data/sylvestre")
 
@@ -37,13 +37,8 @@ save_path   = '/media/data/srebuffi/'
 ###########################
 
 # Load ResNet settings
-str_mixing = str(nb_cl)+'mixing.pickle'
-with open(str_mixing,'rb') as fp:
-    mixing = cPickle.load(fp)
-
 str_settings_resnet = str(nb_cl)+'settings_resnet.pickle'
 with open(str_settings_resnet,'rb') as fp:
-    order       = cPickle.load(fp)
     files_valid = cPickle.load(fp)
     files_train = cPickle.load(fp)
 
@@ -66,7 +61,8 @@ files_from_cl = []
 for i in eval_groups:
     files_from_cl.extend(files_valid[i])
 
-inits,scores,label_batch,loss_class,file_string_batch,op_feature_map = utils_icarl.reading_data_and_preparing_network(files_from_cl, gpu, itera, batch_size, train_path, labels_dic, mixing, nb_groups, nb_cl, save_path) 
+inits,scores,label_batch,loss_class,file_string_batch,op_feature_map = utils_icarl.reading_data_and_preparing_network(
+    files_from_cl, gpu, itera, batch_size, train_path, labels_dic, nb_groups, nb_cl, save_path)
 
 with tf.Session(config=config) as sess:
     # Launch the prefetch system

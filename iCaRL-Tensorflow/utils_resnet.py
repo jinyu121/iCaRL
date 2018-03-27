@@ -3,7 +3,7 @@ import numpy as np
 try:
     import cPickle
 except:
-    import _pickle as cPickle
+    import pickle as cPickle
 
 
 def relu(x, name, alpha):

@@ -6,7 +6,7 @@ import sys
 try:
     import cPickle
 except:
-    import _pickle as cPickle
+    import pickle as cPickle
 
 def parse_devkit_meta(devkit_path):
     meta_mat                = scipy.io.loadmat(devkit_path+'/meta.mat')
@@ -19,12 +19,12 @@ def parse_devkit_meta(devkit_path):
     
     return labels_dic, label_names, validation_ground_truth
 
-def read_data(prefix, labels_dic, mixing, files_from_cl):
+def read_data(prefix, labels_dic, files_from_cl):
     image_list = sorted(map(lambda x: os.path.join(prefix, x),
                         filter(lambda x: x.endswith('JPEG'), files_from_cl)))
 
     prefix2     = np.array([file_i.split(prefix + '/')[1].split("_")[0] for file_i in image_list])
-    labels_list = np.array([mixing[labels_dic[i]] for i in prefix2])
+    labels_list = np.array([labels_dic[i] for i in prefix2])
     
     assert(len(image_list) == len(labels_list))
     images             = tf.convert_to_tensor(image_list, dtype=tf.string)
@@ -38,13 +38,13 @@ def read_data(prefix, labels_dic, mixing, files_from_cl):
     
     return image, label
 
-def read_data_test(prefix,labels_dic, mixing, files_from_cl):
+def read_data_test(prefix, labels_dic, files_from_cl):
     image_list = sorted(map(lambda x: os.path.join(prefix, x),
                         filter(lambda x: x.endswith('JPEG'), files_from_cl)))
     
     prefix2 = np.array([file_i.split(prefix + '/')[1].split("_")[0] for file_i in image_list])
     files_list = [file_i.split(prefix + '/')[1] for file_i in image_list]
-    labels_list = np.array([mixing[labels_dic[i]] for i in prefix2])
+    labels_list = np.array([labels_dic[i] for i in prefix2])
     
     assert(len(image_list) == len(labels_list))
     images              = tf.convert_to_tensor(image_list, dtype=tf.string)
@@ -58,11 +58,11 @@ def read_data_test(prefix,labels_dic, mixing, files_from_cl):
     
     return image, label,file_string
 
-def prepare_files(train_path, mixing, order, labels_dic, nb_groups, nb_cl, nb_val):
+def prepare_files(train_path, labels_dic, nb_groups, nb_cl, nb_val):
     files=os.listdir(train_path)
     
     prefix = np.array([file_i.split("_")[0] for file_i in files])
-    labels_old = np.array([mixing[labels_dic[i]] for i in prefix])
+    labels_old = np.array([labels_dic[i] for i in prefix])
     
     files_train = []
     files_valid = []
@@ -75,7 +75,7 @@ def prepare_files(train_path, mixing, order, labels_dic, nb_groups, nb_cl, nb_va
     
     for i in range(nb_groups):
       for i2 in range(nb_cl):
-        tmp_ind=np.where(labels_old == order[nb_cl*i+i2])[0]
+        tmp_ind=np.where(labels_old == nb_cl*i+i2)[0]
         np.random.shuffle(tmp_ind)
         files_train[i].extend(files[tmp_ind[0:len(tmp_ind)-nb_val]])
         files_valid[i].extend(files[tmp_ind[len(tmp_ind)-nb_val:]])
